@@ -1,218 +1,238 @@
-# GUI-Based Multi-Client Chat Application Using TCP
+# Assignment 7 – Secure Multi-Client GUI Chat Application
 
-## Overview
+## Student Information
 
-This project implements a GUI-based multi-client chat application using Python and the Tkinter library. The application uses TCP socket programming to enable reliable communication between multiple clients connected to a central server. The graphical interface provides a user-friendly environment for chatting while demonstrating event-driven programming and multithreading.
-
----
-
-## Objective
-
-The objective of this project is to develop a graphical multi-client chat application that demonstrates:
-
-- GUI programming using Tkinter
-- TCP socket communication
-- Event-driven programming
-- Multithreading
-- Client-server architecture
-- Real-time messaging between multiple users
+- **Name:** Madhab Boro
+- **Roll No.:** CSB24055
 
 ---
 
-## Features
+# Objective
 
-- Graphical Login Window
-- Graphical Chat Interface
-- Multiple Client Support
-- Broadcast Messaging
-- Private Messaging
-- Join Notifications
-- Leave Notifications
-- Chat History Logging
-- Performance Logging
-- Background Message Receiving Thread
-- User-Friendly Interface
+The objective of this assignment is to develop a secure multi-client GUI-based chat application using Python socket programming. The application implements user authentication, session management, security mechanisms, and real-time communication while analyzing TCP traffic using Wireshark.
 
 ---
 
-## Software Requirements
+# Features Implemented
+
+## Authentication
+- Username and password-based login
+- Passwords stored securely using SHA-256 hashing
+- User authentication using `users.json`
+
+## Security Features
+- Duplicate login prevention
+- Account blocking after multiple failed login attempts
+- Input validation
+- Message length validation
+- Security event logging
+
+## Session Management
+- Automatic session timeout due to inactivity
+- Manual logout using the Disconnect button
+- Online users list
+- Session timeout notification
+
+## Chat Features
+- Broadcast messaging
+- Private messaging using `/msg`
+- Display online users using `/list`
+- Chat history storage
+
+## Logging and Performance
+- Security log generation
+- Chat history logging
+- Performance statistics generation
+
+---
+
+# Software Requirements
 
 - Ubuntu Linux
 - Python 3
-- Tkinter
 - Mininet
 - Wireshark
+- Tkinter
+- VirtualBox
 
 ---
 
-## Project Structure
+# Project Structure
 
-```
-.
+```text
+Assignment_7/
+│
 ├── server.py
 ├── client_gui.py
+├── users.json
+├── README.md
+├── report.pdf
+├── security_log.txt
 ├── chat_history.csv
 ├── performance_results.csv
-├── screenshots/
-├── README.md
-└── report.pdf
+└── screenshots/
+    ├── login.png
+    ├── online_users.png
+    ├── broadcast.png
+    ├── private_message.png
+    ├── duplicate_login.png
+    ├── invalid_login.png
+    ├── account_blocked.png
+    ├── session_timeout.png
+    ├── security_log.png
+    └── wireshark/
+        ├── handshake.png
+        ├── login_packet.png
+        ├── broadcast_packet.png
+        ├── private_packet.png
+        ├── timeout_packet.png
+        └── connection_close.png
 ```
 
 ---
 
-## Network Topology
+# Network Topology
 
-```
-             Mininet
+```text
+                   +-------------+
+                   |  Switch s1  |
+                   +-------------+
+            /        |      |        \
+         h1         h2     h3       h4      h5
 
-             h1
-          Chat Server
-               |
- ---------------------------------
- |        |        |             |
-h2       h3       h4            h5
-
-Client A Client B Client C Client D
-```
-
-Topology Creation:
-
-```bash
-sudo mn --topo single,5
+h1 : Chat Server
+h2 : Client 1
+h3 : Client 2
+h4 : Client 3
+h5 : Client 4
 ```
 
 ---
 
-## How to Run
+# Execution Steps
 
-### Step 1
-
-Start Mininet
+## 1. Start Mininet
 
 ```bash
+sudo mn -c
 sudo mn --topo single,5
 ```
 
-### Step 2
-
-Open terminals
+Open terminals for all hosts:
 
 ```bash
 xterm h1 h2 h3 h4 h5
 ```
 
-### Step 3
+## 2. Start the Server
 
-Run the server on **h1**
+On **h1**:
 
 ```bash
+cd ~/Assignment_7
 python3 server.py
 ```
 
-### Step 4
+## 3. Start the Clients
 
-Run the GUI client on each client host
+On **h2**, **h3**, **h4**, and **h5**:
 
 ```bash
+cd ~/Assignment_7
 python3 client_gui.py
 ```
 
-### Step 5
+## 4. Login
 
-Login using different usernames and start chatting.
-
----
-
-## GUI Components Used
-
-- Tk
-- Frame
-- Label
-- Entry
-- Button
-- Listbox
-- ScrolledText
-- Messagebox
-- Status Label
-
----
-
-## Functionalities
-
-- Client Login
-- Real-Time Chat
-- Broadcast Messages
-- Private Messages
-- Join Notifications
-- Leave Notifications
-- Chat History Storage
-- Performance Statistics
-- Responsive GUI using Background Threads
-
----
-
-## Testing
-
-The application was tested using Mininet with one server and multiple clients.
-
-The following scenarios were successfully verified:
-
-- Client Connection
-- Multiple Client Communication
-- Broadcast Messaging
-- Private Messaging
-- Client Join
-- Client Leave
-- GUI Responsiveness
-
----
-
-## Wireshark Verification
-
-Traffic was captured using the following filter:
+Example credentials:
 
 ```text
-tcp.port == 5000
+Username: Madhab
+Password: password123
 ```
 
-The following were verified:
+## 5. Chat Commands
+
+Broadcast message:
+
+```text
+Hello Everyone
+```
+
+Private message:
+
+```text
+/msg Masum Hello
+```
+
+View online users:
+
+```text
+/list
+```
+
+Logout:
+
+```text
+/logout
+```
+
+---
+
+# Sample Screenshots
+
+The repository includes screenshots demonstrating:
+
+- Server startup
+- Successful login
+- Online users list
+- Broadcast messaging
+- Private messaging
+- Duplicate login prevention
+- Invalid login attempt
+- Account blocking after repeated failed login attempts
+- Session timeout
+- Security log
+- Wireshark TCP handshake
+- Wireshark message transmission
+- TCP connection termination
+
+---
+
+# Wireshark Analysis
+
+Wireshark was used to monitor and analyze TCP communication between the clients and server. The captured packets include:
 
 - TCP Three-Way Handshake
-- Broadcast Message Transmission
-- Private Message Transmission
-- TCP Connection Termination
+- Login authentication packets
+- Broadcast message packets
+- Private message packets
+- Online user update packets
+- Session timeout packets
+- TCP connection termination (FIN/ACK)
 
 ---
 
-## Screenshots
+# Generated Files
 
-The `screenshots/` directory contains:
+The application generates the following files:
 
-- Login Window
-- Successful Connection
-- Main Chat Window
-- Broadcast Messaging
-- Private Messaging
-- User Joining
-- User Leaving
-- Wireshark Connection
-- Wireshark Broadcast
-- Wireshark Private Message
-- Wireshark Disconnect
+- `chat_history.csv`
+- `performance_results.csv`
+- `security_log.txt`
+
+These files record chat history, performance metrics, and security-related events generated during execution.
 
 ---
 
-## Technologies Used
+# Brief Description of the Implementation
 
-- Python
-- Tkinter
-- Socket Programming
-- Threading
-- Mininet
-- Wireshark
+The application is developed using Python socket programming and multithreading to support multiple simultaneous client connections. A Tkinter-based graphical user interface provides an intuitive chat experience. User authentication is secured using SHA-256 password hashing, while additional security mechanisms such as duplicate login prevention, account blocking after repeated failed login attempts, input validation, and automatic session timeout improve the overall security of the application.
+
+The server manages client connections, broadcasts messages, supports private messaging, maintains the online user list, stores chat history, records performance statistics, and logs security events. Wireshark was used to verify TCP communication and analyze network traffic during testing.
 
 ---
 
-## Conclusion
+# Conclusion
 
-This project demonstrates the implementation of a GUI-based multi-client chat application using TCP socket programming. The application successfully integrates graphical user interface development with networking concepts, allowing multiple users to communicate efficiently through a responsive and user-friendly chat system.
+This project demonstrates the implementation of a secure multi-client GUI chat application using TCP socket programming. It integrates networking, multithreading, GUI development, authentication, session management, and network traffic analysis to provide a reliable and secure client-server communication system.

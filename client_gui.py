@@ -12,9 +12,7 @@ client = None
 
 
 class LoginWindow:
-
     def __init__(self):
-
         self.root = tk.Tk()
         self.root.title("TCP Chat Login")
         self.root.geometry("400x320")
@@ -45,11 +43,11 @@ class LoginWindow:
         self.status.pack(pady=5)
 
         tk.Button(
-           self.root,
-           text="Connect",
-           width=15,
-           command=self.connect
-       ).pack(pady=10)
+            self.root,
+            text="Connect",
+            width=15,
+            command=self.connect
+        ).pack(pady=10)
 
         print("Creating Connect button")
         self.root.mainloop()
@@ -59,16 +57,21 @@ class LoginWindow:
         global client
 
         username = self.username.get().strip()
-
-        if username == "":
+        password = self.password.get()
+        import re
+        if username == "" or password == "":
             messagebox.showerror(
                 "Error",
                 "Username cannot be empty."
             )
             return
-
+        if not re.match(r"^[A-Za-z0-9_]+$", username):
+            messagebox.showerror(
+                "Invalid Username",
+                "Username may contain only letters, numbers and underscores."
+            )
+            return
         try:
-
             client = socket.socket(
                 socket.AF_INET,
                 socket.SOCK_STREAM
@@ -76,7 +79,32 @@ class LoginWindow:
 
             client.connect((SERVER_IP, PORT))
 
-            client.send(username.encode())
+            client.send(f"{username}:{password}".encode())
+            response = client.recv(1024).decode()
+
+            if response == "LOGIN_SUCCESS":
+                pass
+            elif response == "ALREADY_LOGGED_IN":
+                messagebox.showerror(
+                    "Login Failed",
+                    "User is already logged in."
+                )
+                client.close()
+                return
+            elif response == "ACCOUNT_BLOCKED":
+                messagebox.showerror(
+                    "Account Blocked",
+                    "Too many failed login attempts.\nTry again in 60 seconds."
+                )
+                client.close()
+                return
+            else:
+                messagebox.showerror(
+                    "Login Failed",
+                    "Invalid username or password."
+                )
+                client.close()
+                return
 
             self.status.config(
                 text="Connected",
@@ -88,15 +116,14 @@ class LoginWindow:
             ChatWindow(client, username)
 
         except Exception as e:
-
             messagebox.showerror(
                 "Connection Error",
                 str(e)
             )
+
+
 class ChatWindow:
-
     def __init__(self, client_socket, username):
-
         self.client = client_socket
         self.username = username
 
@@ -223,60 +250,77 @@ class ChatWindow:
             "WM_DELETE_WINDOW",
             self.disconnect
         )
-
         self.root.mainloop()
     def receive_messages(self):
-
+        print("Receive thread started")
+        buffer = ""
         while True:
-
             try:
+                data = self.client.recv(1024).decode()
 
-                message = self.client.recv(1024).decode()
-
-                if not message:
+                if not data:
                     break
 
-                # Online users update
-                if message.startswith("USERS:"):
+                buffer += data
 
-                    users = message.replace("USERS:", "").split(",")
+                while "\n" in buffer:
+                    message, buffer = buffer.split("\n", 1)
+                    print("CLIENT RECEIVED:", repr(message)) 
+                    # Session timeout
+                    if message == "SESSION_TIMEOUT":
+                        messagebox.showwarning(
+                            "Session Timeout",
+                            "You have been logged out due to inactivity."
+                        )
 
-                    self.user_list.delete(0, tk.END)
+                        try:
+                            self.client.close()
+                        except:
+                            pass
 
-                    for user in users:
-                        if user.strip():
-                            self.user_list.insert(tk.END, user.strip())
+                        self.root.destroy()
+                        return
 
-                    continue
+                    # Online users update
+                    if message.startswith("USERS:"):
+                        users = message.replace("USERS:", "").split(",")
 
-                self.chat_area.config(state="normal")
+                        self.user_list.delete(0, tk.END)
 
-                self.chat_area.insert(
-                    tk.END,
-                    message + "\n"
-                )
+                        for user in users:
+                            if user.strip():
+                                self.user_list.insert(tk.END, user.strip())
 
-                self.chat_area.see(tk.END)
+                        continue
 
-                self.chat_area.config(state="disabled")
+                    self.chat_area.config(state="normal")
+
+                    self.chat_area.insert(
+                        tk.END,
+                        message + "\n"
+                    )
+
+                    self.chat_area.see(tk.END)
+
+                    self.chat_area.config(state="disabled")
 
             except:
                 break
 
-
     def send_message(self):
-
         message = self.message_entry.get().strip()
-
+        if len(message) > 500:
+            messagebox.showerror(
+                "Message Too Long",
+                "Maximum message length is 500 characters."
+            )
+            return
         if message == "":
             return
 
         try:
-
             self.client.send(message.encode())
-
         except:
-
             messagebox.showerror(
                 "Error",
                 "Unable to send message."
@@ -284,13 +328,13 @@ class ChatWindow:
 
         self.message_entry.delete(0, tk.END)
 
-
     def disconnect(self):
-
         try:
-
+            self.client.send("/logout".encode())
+        except:
+            pass
+        try:
             self.client.close()
-
         except:
             pass
 
@@ -305,5 +349,4 @@ class ChatWindow:
 # ---------------- Main ----------------
 
 if __name__ == "__main__":
-
     LoginWindow()

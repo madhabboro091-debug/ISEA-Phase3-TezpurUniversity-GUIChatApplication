@@ -4,9 +4,15 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 
-SERVER_IP = "10.0.0.1"
+import json
 
-PORT = 5000
+with open("config.json") as f:
+    config=json.load(f)
+
+SERVER_IP=config["HOST"]
+PORT=config["PORT"]
+BUFFER_SIZE=config["BUFFER_SIZE"]
+MAX_MESSAGE_LENGTH=config["MAX_MESSAGE_LENGTH"]
 
 client = None
 
@@ -49,11 +55,9 @@ class LoginWindow:
             command=self.connect
         ).pack(pady=10)
 
-        print("Creating Connect button")
         self.root.mainloop()
 
     def connect(self):
-        print("Connect button clicked")
         global client
 
         username = self.username.get().strip()
@@ -80,7 +84,7 @@ class LoginWindow:
             client.connect((SERVER_IP, PORT))
 
             client.send(f"{username}:{password}".encode())
-            response = client.recv(1024).decode()
+            response = client.recv(BUFFER_SIZE).decode()
 
             if response == "LOGIN_SUCCESS":
                 pass
@@ -252,11 +256,10 @@ class ChatWindow:
         )
         self.root.mainloop()
     def receive_messages(self):
-        print("Receive thread started")
         buffer = ""
         while True:
             try:
-                data = self.client.recv(1024).decode()
+                data = self.client.recv(BUFFER_SIZE).decode()
 
                 if not data:
                     break
@@ -265,7 +268,6 @@ class ChatWindow:
 
                 while "\n" in buffer:
                     message, buffer = buffer.split("\n", 1)
-                    print("CLIENT RECEIVED:", repr(message)) 
                     # Session timeout
                     if message == "SESSION_TIMEOUT":
                         messagebox.showwarning(
@@ -309,10 +311,10 @@ class ChatWindow:
 
     def send_message(self):
         message = self.message_entry.get().strip()
-        if len(message) > 500:
+        if len(message) > MAX_MESSAGE_LENGTH:
             messagebox.showerror(
                 "Message Too Long",
-                "Maximum message length is 500 characters."
+                f"Maximum message length is {MAX_MESSAGE_LENGTH} characters."
             )
             return
         if message == "":

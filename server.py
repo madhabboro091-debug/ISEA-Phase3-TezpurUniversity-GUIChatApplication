@@ -1,3 +1,10 @@
+"""
+GUI Chat Server
+
+Provides authentication, broadcast/private messaging,
+chat history logging, session management,
+security logging and performance evaluation.
+"""
 import json
 import hashlib
 import re
@@ -7,8 +14,15 @@ import csv
 import time
 from datetime import datetime, timedelta
 
-HOST = "10.0.0.1"
-PORT = 5000
+with open("config.json") as f:
+    config=json.load(f)
+
+HOST=config["HOST"]
+PORT=config["PORT"]
+SESSION_TIMEOUT=config["SESSION_TIMEOUT"]
+MAX_MESSAGE_LENGTH=config["MAX_MESSAGE_LENGTH"]
+BUFFER_SIZE=config["BUFFER_SIZE"]
+MAX_CLIENTS=config["MAX_CLIENTS"]
 
 clients = []
 usernames = {}
@@ -23,7 +37,6 @@ failed_attempts = {}
 
 blocked_until = {}
 
-SESSION_TIMEOUT = 300
 
 USER_FILE = "users.json"
 
@@ -38,16 +51,12 @@ def load_users():
 
 users_db = load_users()
 def verify_user(username, password):
-    print("Checking user:", username)
 
     if username not in users_db:
-        print("User not found")
         return False
 
     password_hash = hashlib.sha256(password.encode()).hexdigest()
 
-    print("Stored hash    :", users_db[username])
-    print("Computed hash  :", password_hash)
 
     return users_db[username] == password_hash
 
@@ -85,24 +94,19 @@ def send_history(client):
     except:
         pass
 def broadcast(message):
-    print("Broadcasting:", repr(message))
-    print("Clients:", len(clients))
 
     for c in clients:
         try:
             c.send((message + "\n").encode())
-            print("Sent to:", usernames.get(c, "Unknown"))
         except Exception as e:
             print("Broadcast error:", e)
 def update_online_users():
 
     users = ",".join(usernames.values())
-    print("Updating users:", users)
 
     for client in clients:
         try:
             client.send(f"USERS:{users}\n".encode())
-            print("Sent USERS to", usernames.get(client))
         except Exception as e:
             print("User update error:", e)
 def send_online_users(client):
@@ -115,12 +119,12 @@ def send_private(sender_client,receiver,message):
     global private_count,message_count
     sender=usernames[sender_client]
     message_count += 1
-    if message_count==50:
+    if message_count >= 10:
         write_results()
     for c in clients:
         if usernames[c]==receiver:
-            c.send(f"[PRIVATE] {sender}: {message}".encode())
-            sender_client.send(f"[To {receiver}] {message}".encode())
+            c.send(f"[PRIVATE] {sender}: {message}\n".encode())
+            sender_client.send(f"[To {receiver}] {message}\n".encode())
             private_count += 1
             save_history(sender,receiver,"Private",message)
             return
@@ -217,7 +221,7 @@ def handle_client(client,addr):
     while True:
         try:
 
-            data = client.recv(1024).decode()
+            data = client.recv(BUFFER_SIZE).decode()
  
             if not data:
                 break
@@ -226,7 +230,7 @@ def handle_client(client,addr):
 
         except socket.timeout:
 
-            if time.time() - last_activity[client] > 300:   # Use 300 later
+            if time.time() - last_activity[client] > SESSION_TIMEOUT:   # timeout
                 write_security_log(f"{username} SESSION TIMEOUT")
                 client.send(b"SESSION_TIMEOUT\n")
                 break
@@ -241,7 +245,7 @@ def handle_client(client,addr):
             client.send(b"LOGOUT_SUCCESS")
             break
    
-        if len(data) > 500:
+        if len(data) > MAX_MESSAGE_LENGTH:
             client.send(b"Message rejected: Too long.\n")
             continue
 
@@ -266,7 +270,7 @@ def handle_client(client,addr):
              broadcast(text)
              save_history(username,"ALL","Broadcast",data)
           
-             if message_count == 50:
+             if message_count >= 10:
                     write_results()
 
 
@@ -290,8 +294,8 @@ server=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 server.bind((HOST,PORT))
 server.listen()
 
-print("Server Started...")
-print("Waiting for clients...")
+print(f"Server started on {HOST}:{PORT}")
+print("Waiting for clients connections...")
 
 while True:
     client,addr=server.accept()

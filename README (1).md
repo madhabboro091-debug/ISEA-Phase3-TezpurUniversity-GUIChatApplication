@@ -1,231 +1,213 @@
-# Secure Multi-Client GUI Chat Application
+# GUI Chat Application
 
-# Objective
-
-The objective of this assignment is to develop a secure multi-client GUI-based chat application using Python socket programming. The application implements user authentication, session management, security mechanisms, and real-time communication while analyzing TCP traffic using Wireshark.
+A multi-client GUI-based chat application built using Python and TCP sockets. The application provides secure user authentication, real-time messaging, performance evaluation, and network traffic analysis while demonstrating scalability and reliability improvements.
 
 ---
 
-# Features Implemented
+## Overview
 
-## Authentication
-- Username and password-based login
-- Passwords stored securely using SHA-256 hashing
-- User authentication using `users.json`
+This project implements a client-server chat system with a graphical user interface. It supports multiple concurrent clients, secure user authentication, broadcast and private messaging, configurable server settings, and performance monitoring. The application is designed to evaluate how the system behaves under different client loads while maintaining reliable communication.
 
-## Security Features
-- Duplicate login prevention
-- Account blocking after multiple failed login attempts
-- Input validation
-- Message length validation
-- Security event logging
+---
 
-## Session Management
-- Automatic session timeout due to inactivity
-- Manual logout using the Disconnect button
-- Online users list
-- Session timeout notification
+## Features
 
-## Chat Features
+- GUI-based chat client using Tkinter
+- Multi-client TCP server
+- Secure user authentication using SHA-256 password hashing
 - Broadcast messaging
-- Private messaging using `/msg`
-- Display online users using `/list`
-- Chat history storage
-
-## Logging and Performance
-- Security log generation
+- Private messaging
+- Online users list
 - Chat history logging
-- Performance statistics generation
+- Security event logging
+- Session timeout for inactive users
+- Configurable server parameters using `config.json`
+- Performance evaluation and CSV logging
+- Delay and throughput graph generation
+- Network traffic analysis using Wireshark
 
 ---
 
-# Software Requirements
+## Technologies Used
 
-- Ubuntu Linux
 - Python 3
+- TCP Sockets
+- Tkinter
 - Mininet
 - Wireshark
-- Tkinter
-- VirtualBox
+- Pandas
+- Matplotlib
 
 ---
 
-# Project Structure
+## Project Structure
 
-```text
-Assignment_7/
-│
+```
+.
 ├── server.py
 ├── client_gui.py
+├── config.json
 ├── users.json
-├── README.md
-├── report.pdf
-├── security_log.txt
 ├── chat_history.csv
 ├── performance_results.csv
-└── screenshots/
-    ├── login.png
-    ├── online_users.png
-    ├── broadcast.png
-    ├── private_message.png
-    ├── duplicate_login.png
-    ├── invalid_login.png
-    ├── account_blocked.png
-    ├── session_timeout.png
-    ├── security_log.png
-    └── wireshark/
-        ├── handshake.png
-        ├── login_packet.png
-        ├── broadcast_packet.png
-        ├── private_packet.png
-        ├── timeout_packet.png
-        └── connection_close.png
+├── graph_generator.py
+├── graphs/
+│   ├── delay_graph.png
+│   └── throughput_graph.png
+├── screenshots/
+├── README.md
+└── report.pdf
 ```
 
 ---
 
-# Network Topology
+## Prerequisites
 
-```text
-                   +-------------+
-                   |  Switch s1  |
-                   +-------------+
-            /        |      |        \
-         h1         h2     h3       h4      h5
-
-h1 : Chat Server
-h2 : Client 1
-h3 : Client 2
-h4 : Client 3
-h5 : Client 4
-```
-
----
-
-# Execution Steps
-
-## 1. Start Mininet
+Install the required Python packages:
 
 ```bash
-sudo mn -c
-sudo mn --topo single,5
+sudo apt install python3-pandas python3-matplotlib
 ```
+
+Ensure the following software is available:
+
+- Python 3.x
+- Mininet
+- Wireshark
+
+---
+
+## Network Topology
+
+The application was tested using Mininet with a single-switch topology.
+
+```bash
+sudo mn --topo single,11
+```
+
+Host allocation:
+
+- **h1** – Server
+- **h2–h11** – Clients
 
 Open terminals for all hosts:
 
 ```bash
-xterm h1 h2 h3 h4 h5
+xterm h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11
 ```
 
-## 2. Start the Server
+---
+
+## Running the Application
+
+### Start the Server
 
 On **h1**:
 
 ```bash
-cd ~/Assignment_7
 python3 server.py
 ```
 
-## 3. Start the Clients
+### Start the Clients
 
-On **h2**, **h3**, **h4**, and **h5**:
+On each client host:
 
 ```bash
-cd ~/Assignment_7
 python3 client_gui.py
 ```
 
-## 4. Login
-
-Example credentials:
-
-```text
-Username: Madhab
-Password: password123
-```
-
-## 5. Chat Commands
-
-Broadcast message:
-
-```text
-Hello Everyone
-```
-
-Private message:
-
-```text
-/msg Masum Hello
-```
-
-View online users:
-
-```text
-/list
-```
-
-Logout:
-
-```text
-/logout
-```
+Authenticate using the credentials defined in `users.json`.
 
 ---
 
-# Sample Screenshots
+## Functionalities
 
-The repository includes screenshots demonstrating:
+The application supports the following operations:
 
-- Server startup
-- Successful login
-- Online users list
+- User authentication
 - Broadcast messaging
 - Private messaging
-- Duplicate login prevention
-- Invalid login attempt
-- Account blocking after repeated failed login attempts
+- Viewing online users
+- User logout
 - Session timeout
-- Security log
-- Wireshark TCP handshake
-- Wireshark message transmission
-- TCP connection termination
+- Chat history logging
+- Performance monitoring
 
 ---
 
-# Wireshark Analysis
+## Performance Evaluation
 
-Wireshark was used to monitor and analyze TCP communication between the clients and server. The captured packets include:
+The application was evaluated using the following metrics:
 
-- TCP Three-Way Handshake
-- Login authentication packets
-- Broadcast message packets
-- Private message packets
-- Online user update packets
-- Session timeout packets
-- TCP connection termination (FIN/ACK)
+- Average message delay
+- Message throughput
+- Concurrent client scalability
+
+Experiments were conducted with:
+
+- 5 concurrent clients
+- 8 concurrent clients
+- 10 concurrent clients
+
+Performance results are stored in:
+
+```
+performance_results.csv
+```
+
+Graphs can be generated using:
+
+```bash
+python3 graph_generator.py
+```
+
+Generated output:
+
+- `graphs/delay_graph.png`
+- `graphs/throughput_graph.png`
 
 ---
 
-# Generated Files
+## Wireshark Analysis
 
-The application generates the following files:
+Network communication was captured and analyzed using Wireshark to observe:
 
-- `chat_history.csv`
-- `performance_results.csv`
-- `security_log.txt`
-
-These files record chat history, performance metrics, and security-related events generated during execution.
-
----
-
-# Brief Description of the Implementation
-
-The application is developed using Python socket programming and multithreading to support multiple simultaneous client connections. A Tkinter-based graphical user interface provides an intuitive chat experience. User authentication is secured using SHA-256 password hashing, while additional security mechanisms such as duplicate login prevention, account blocking after repeated failed login attempts, input validation, and automatic session timeout improve the overall security of the application.
-
-The server manages client connections, broadcasts messages, supports private messaging, maintains the online user list, stores chat history, records performance statistics, and logs security events. Wireshark was used to verify TCP communication and analyze network traffic during testing.
+- TCP three-way handshake
+- Client authentication
+- Broadcast messaging
+- Private messaging
+- Client disconnection
 
 ---
 
-# Conclusion
+## Improvements
 
-This project demonstrates the implementation of a secure multi-client GUI chat application using TCP socket programming. It integrates networking, multithreading, GUI development, authentication, session management, and network traffic analysis to provide a reliable and secure client-server communication system.
+The project introduces several software quality improvements while preserving the existing communication protocol:
+
+- External configuration using `config.json`
+- Improved exception handling
+- Automatic cleanup of disconnected clients
+- Session timeout management
+- Performance logging
+- Scalability testing with multiple concurrent clients
+- Delay and throughput visualization
+
+---
+
+## Future Enhancements
+
+Possible future improvements include:
+
+- End-to-end message encryption
+- File sharing
+- Group chat support
+- Voice and video communication
+- Database-backed user management
+- Message delivery acknowledgements
+- Docker-based deployment
+
+---
+
+## License
+
+This project is intended for educational and learning purposes.

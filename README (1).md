@@ -1,11 +1,4 @@
-# Assignment 7 – Secure Multi-Client GUI Chat Application
-
-## Student Information
-
-- **Name:** Madhab Boro
-- **Roll No.:** CSB24055
-
----
+# Secure Multi-Client GUI Chat Application
 
 # Objective
 
